@@ -1,0 +1,8 @@
+body { font-family: Arial, sans-serif; margin: 20px; }
+.container { max-width: 420px; margin: 0 auto; }
+label { display: block; margin-bottom: 10px; }
+input { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; }
+button { padding: 8px 12px; }
+.device-card { border: 1px solid #ddd; padding: 8px; margin-bottom: 8px; border-radius: 6px; }
+header { display:flex; justify-content:space-between; align-items:center; }
+pre { background: #f9f9f9; padding:8px; overflow:auto; }

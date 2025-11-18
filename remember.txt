@@ -1,0 +1,7 @@
+POST
+curl -k -X POST http://172.20.10.4:3333/dados \
+-H "Content-Type: application/json" \
+-d '{"device_id":"test_1","db":20,"timestamp":123123123}'
+
+GET
+curl -k https://libelous-aerogenic-ariyah.ngrok-free.dev/dados
