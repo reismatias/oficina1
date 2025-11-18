@@ -40,7 +40,6 @@
           msg.textContent = j.message || 'Login failed';
           return;
         }
-        // on success -> redirect to dashboard
         window.location.href = '/dashboard.html';
       } catch (err) {
         msg.textContent = 'Network error';

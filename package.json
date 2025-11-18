@@ -4,7 +4,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "redis:up": "docker compose up -d",
+    "redis:down": "docker compose down"
   },
   "keywords": [],
   "author": "",
@@ -13,9 +15,13 @@
     "@ngrok/ngrok": "^1.5.2",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
+    "connect-redis": "^9.0.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "express-session": "^1.18.2"
+    "express-session": "^1.18.2",
+    "redis": "^5.9.0",
+    "winston": "^3.18.3",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "description": "",
   "devDependencies": {

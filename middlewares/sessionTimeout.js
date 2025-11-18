@@ -1,4 +1,3 @@
-// middlewares/sessionTimeout.js
 const { logEvent } = require('../utils/logger');
 
 module.exports = function sessionTimeout({ maxAgeMs = 1000*60*60*8, inactivityMs = 1000*60*15 } = {}) {
@@ -32,7 +31,6 @@ module.exports = function sessionTimeout({ maxAgeMs = 1000*60*60*8, inactivityMs
       return;
     }
 
-    // touch
     req.session.lastActivity = Date.now();
     if (req.session.cookie) {
       req.session.cookie.expires = new Date(Date.now() + maxAgeMs);

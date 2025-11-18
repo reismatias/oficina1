@@ -1,19 +1,73 @@
 <!doctype html>
-<html>
+<html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard - ESP32</title>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+
   <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin: 0; padding: 0; }
+    header { display:flex; justify-content:space-between; align-items:center; padding:12px 20px; background:#0f172a; color:white; }
+    header h1 { margin:0; font-size:18px; }
+    header .controls { display:flex; gap:8px; align-items:center; }
+    #app { display:flex; height: calc(100vh - 56px); }
+    #sidebar { width: 260px; border-right:1px solid #e6e6e6; padding:12px; box-sizing:border-box; overflow:auto; background:#fafafa; }
+    #main { flex:1; padding:16px; box-sizing:border-box; display:flex; flex-direction:column; gap:12px; }
+    .device-item { padding:8px; border-radius:6px; margin-bottom:6px; cursor:pointer; }
+    .device-item:hover { background:#eef2ff; }
+    .device-item.active { background:#c7d2fe; font-weight:600; }
+    .metrics { display:flex; gap:8px; align-items:center; }
+    .info-line { color:#334155; font-size:13px; }
+    #chartWrap { background:white; border-radius:8px; padding:12px; box-shadow:0 2px 6px rgba(16,24,40,0.04); flex:1; display:flex; flex-direction:column; }
+    #chart { flex:1; }
+    .small { font-size:13px; color:#475569; }
+    .empty { color:#94a3b8; padding:18px; text-align:center; }
+    button { cursor:pointer; }
+  </style>
 </head>
 <body>
   <header>
-    <h1>Dashboard</h1>
-    <button id="logoutBtn">Logout</button>
+    <h1>Dashboard — ESP32</h1>
+    <div class="controls">
+      <div id="status" class="small">Carregando...</div>
+      <button id="logoutBtn">Logout</button>
+    </div>
   </header>
-  <main>
-    <section id="status"></section>
-    <section id="devices"></section>
-  </main>
+
+  <div id="app">
+    <aside id="sidebar">
+      <h3>Devices</h3>
+      <div id="deviceList">Carregando devices...</div>
+      <hr />
+      <div class="small">Polling interval:
+        <select id="pollInterval">
+          <option value="2000">2s</option>
+          <option value="3000" selected>3s</option>
+          <option value="5000">5s</option>
+          <option value="10000">10s</option>
+        </select>
+      </div>
+    </aside>
+
+    <main id="main">
+      <div class="metrics">
+        <label class="small">Métrica:
+          <select id="metricSelect"></select>
+        </label>
+        <div style="flex:1"></div>
+        <div id="lastUpdate" class="small">Última atualização: —</div>
+      </div>
+
+      <div id="chartWrap">
+        <canvas id="chart"></canvas>
+        <div id="noData" class="empty" style="display:none">Selecione um device com dados para ver o gráfico.</div>
+      </div>
+    </main>
+  </div>
 
   <script src="/js/dashboard.js"></script>
 </body>
