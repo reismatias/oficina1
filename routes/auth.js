@@ -1,9 +1,9 @@
-// routes/auth.js
 const express = require('express');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const { getUser, readUsers } = require('../services/userService');
 const { logEvent } = require('../utils/logger');
+const { requireAuth } = require('./guard');
 
 const router = express.Router();
 
@@ -47,11 +47,13 @@ router.post('/logout', (req, res) => {
   });
 });
 
-router.get('/auth/status', (req, res) => {
-  if (req.session && req.session.username) {
-    return res.json({ authenticated: true, username: req.session.username, createdAt: req.session.createdAt, lastActivity: req.session.lastActivity });
-  }
-  res.json({ authenticated: false });
+router.get('/auth/status', requireAuth, (req, res) => {
+  return res.json({
+    authenticated: true,
+    username: req.session.username,
+    createdAt: req.session.createdAt,
+    lastActivity: req.session.lastActivity
+  });
 });
 
 module.exports = router;

@@ -1,4 +1,4 @@
-// app.js
+// app.js (top excerpt)
 require('dotenv').config();
 
 const express = require('express');
@@ -9,6 +9,7 @@ const session = require('express-session');
 const { createClient } = require('redis');
 
 const authRouter = require('./routes/auth');
+const { router: guardRouter } = require('./routes/guard');
 const sessionTimeout = require('./middlewares/sessionTimeout');
 const { logEvent, logger } = require('./utils/logger'); // winston-based logger
 
@@ -247,28 +248,11 @@ async function startServer() {
     });
   });
 
-  // Friendly routes (login / dashboard)
-  // GET /login should redirect to /dashboard when already authenticated (authRouter handles POST /login)
-  app.get('/login', (req, res) => {
-    if (req.session && req.session.username) return res.redirect('/dashboard');
-    return res.sendFile(path.join(__dirname, 'public', 'login.html'));
-  });
+  // Rota de Login
+  app.use(authRouter);
 
-  // Also explicitly guard /login.html
-  app.get('/login.html', (req, res) => {
-    if (req.session && req.session.username) return res.redirect('/dashboard');
-    return res.sendFile(path.join(__dirname, 'public', 'login.html'));
-  });
-
-  app.get('/', (req, res) => res.redirect('/login'));
-  app.get('/dashboard', (req, res) => {
-    if (!req.session || !req.session.username) return res.redirect('/login');
-    return res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
-  });
-  app.get('/dashboard.html', (req, res) => {
-    if (!req.session || !req.session.username) return res.redirect('/login');
-    return res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
-  });
+  // Rotas protegida
+  app.use('/', guardRouter);
 
   // Start listening
   app.listen(PORT, '0.0.0.0', () => {

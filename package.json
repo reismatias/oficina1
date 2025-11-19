@@ -5,8 +5,8 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "redis:up": "docker compose up -d",
-    "redis:down": "docker compose down"
+    "redis:up": "docker-compose up -d",
+    "redis:down": "docker-compose down"
   },
   "keywords": [],
   "author": "",
@@ -26,5 +26,14 @@
   "description": "",
   "devDependencies": {
     "nodemon": "^3.1.11"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reismatias/oficina1.git"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/reismatias/oficina1/issues"
+  },
+  "homepage": "https://github.com/reismatias/oficina1#readme"
 }
