@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Sidebar toggle
+  // ========================================
+  // Sidebar & Navigation
+  // ========================================
   const sidebar = document.getElementById('sidebar');
   const toggleBtn = document.getElementById('toggleSidebar');
   toggleBtn.addEventListener('click', () => {
@@ -10,7 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Logout flow (calls server POST /logout)
+  // ========================================
+  // Logout
+  // ========================================
   const logoutBtn = document.getElementById('logoutBtn');
   logoutBtn.addEventListener('click', async () => {
     try {
@@ -24,21 +28,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Load devices (assumes backend exposes /api/dados which lista arquivos/device ids)
+  // ========================================
+  // Device List & Selection
+  // Lista todos os devices e mantém o selecionado.
+  // ========================================
   const deviceList = document.getElementById('deviceList');
   const refreshBtn = document.getElementById('refreshDevices');
   const lastUpdateEl = document.getElementById('lastUpdate');
 
-  let selectedDevice = null; // Store selected device globally
+  let selectedDevice = null;
 
   async function fetchDevices() {
-    // Don't wipe content immediately to avoid flickering
-    // deviceList.innerHTML = '<div style="opacity:.7">Carregando...</div>';
     try {
       const res = await fetch('/api/dados');
       if (!res.ok) throw new Error('Não foi possível listar devices');
       const data = await res.json();
-      // Fix: API returns { devices: [...] }
       renderDevices(data.devices || []);
     } catch (err) {
       console.error(err);
@@ -50,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     deviceList.innerHTML = '';
     if (!items || items.length === 0) { deviceList.innerHTML = '<div style="opacity:.7">Nenhum device encontrado</div>'; return }
 
-    // Auto-select first device if none selected
+    // Auto-seleciona o primeiro device se nada estiver selecionado
     if (!selectedDevice && items.length > 0) {
       const first = items[0];
       const firstName = typeof first === 'string' ? first : (first.name || first.filename || first.device_id || JSON.stringify(first));
@@ -63,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
       el.className = 'device-item';
       el.textContent = name.replace('.json', '');
 
-      // Re-apply selection style if this device was selected
+      // Mantém o estilo de seleção ao atualizar a lista
       if (selectedDevice === name) {
         el.style.background = 'rgba(255,255,255,0.03)';
       }
@@ -78,7 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function selectDevice(name) {
     selectedDevice = name;
-    // Visual update
     [...deviceList.children].forEach(c => {
       if (c.textContent === name.replace('.json', '')) {
         c.style.background = 'rgba(255,255,255,0.03)';
@@ -88,14 +91,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     lastUpdateEl.textContent = new Date().toLocaleTimeString();
-    // Fetch data for the selected device
     console.log('Selecting device:', name);
     fetchDeviceData(name);
   }
 
+  // ========================================
+  // Data Fetching & Rendering
+  // Busca e exibe os dados do device selecionado.
+  // ========================================
   async function fetchDeviceData(filename) {
     console.log('Fetching data for:', filename);
-    // const chartArea = document.getElementById('chartArea'); // Unused now
 
     try {
       const res = await fetch(`/api/dados/${filename}`);
@@ -106,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error(err);
       alert('Erro ao carregar dados: ' + err.message);
-      // chartArea.innerHTML = '<div style="color:#f88">Erro ao carregar dados</div>';
     }
   }
 
@@ -114,11 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderData(data) {
     console.log('Rendering data...', data);
-    // const chartArea = document.getElementById('chartArea'); // Unused
 
     let ctx = document.getElementById('myChart');
 
-    // If canvas is missing (shouldn't happen with static HTML but just in case)
     if (!ctx) {
       console.error('Canvas element #myChart not found!');
       return;
@@ -126,10 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!data || !data.entries || data.entries.length === 0) {
       console.log('No data entries found');
-      // alert('Este dispositivo não possui dados registrados.'); // Annoying on auto-refresh
       if (myChart) {
-        // Clear chart data but keep instance? Or destroy?
-        // Let's just clear
         myChart.data.labels = [];
         myChart.data.datasets.forEach((dataset) => {
           dataset.data = [];
@@ -144,27 +143,21 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Render Logs
     renderLogs(data.entries);
 
-    // Prepare data: Aggregate by minute
+    // Agrupa dados por minuto e mostra os últimos 30 minutos
     const aggregated = aggregateByMinute(data.entries);
-
-    // Limit to last 20 minutes for better visibility if needed, or show all.
-    // Let's show the last 30 minutes to keep it readable.
     const recentAggregated = aggregated.slice(-30);
 
     const labels = recentAggregated.map(e => new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     const values = recentAggregated.map(e => e.db);
 
-    // Update chart if it exists, otherwise create it
+    // Atualiza o gráfico se já existir, senão cria um novo
     if (myChart) {
-      // Update existing chart data
       myChart.data.labels = labels;
       myChart.data.datasets[0].data = values;
-      myChart.update('none'); // 'none' mode = no animation
+      myChart.update('none');
     } else {
-      // Create new chart
       myChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -195,39 +188,98 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           },
           plugins: {
-            legend: { labels: { color: '#fff' } }
+            legend: { labels: { color: '#fff' } },
+            annotation: {
+              annotations: {
+                thresholdLine: {
+                  type: 'line',
+                  yMin: 60,
+                  yMax: 60,
+                  borderColor: 'rgba(244,67,54,0.8)',
+                  borderWidth: 2,
+                  borderDash: [5, 5],
+                  label: {
+                    display: true,
+                    content: 'Limite: 60dB',
+                    position: 'end',
+                    backgroundColor: 'rgba(244,67,54,0.8)',
+                    color: '#fff',
+                    font: {
+                      size: 11
+                    },
+                    padding: 4
+                  }
+                }
+              }
+            }
           }
         }
       });
     }
   }
 
+  // ========================================
+  // Event Logs
+  // Mostra alertas quando a média de 3 minutos ultrapassa 60dB.
+  // ========================================
   function renderLogs(entries) {
     const logsContainer = document.getElementById('eventLogs');
     logsContainer.innerHTML = '';
 
-    // Filter high dB events (e.g., > 80)
-    // Show last 20 events
-    const highDbEvents = entries.filter(e => e.db > 80).reverse().slice(0, 20);
-
-    if (highDbEvents.length === 0) {
-      logsContainer.innerHTML = '<div style="opacity:0.5;font-style:italic">Nenhum evento de alto ruído (>80dB).</div>';
+    if (!entries || entries.length === 0) {
+      logsContainer.innerHTML = '<div style="opacity:0.5;font-style:italic">Nenhum dado disponível.</div>';
       return;
     }
 
-    highDbEvents.forEach(e => {
+    const THREE_MINUTES = 3 * 60 * 1000;
+    const intervalGroups = {};
+
+    entries.forEach(e => {
+      const intervalStart = Math.floor(e.timestamp / THREE_MINUTES) * THREE_MINUTES;
+
+      if (!intervalGroups[intervalStart]) {
+        intervalGroups[intervalStart] = { sum: 0, count: 0, timestamp: intervalStart };
+      }
+
+      intervalGroups[intervalStart].sum += e.db;
+      intervalGroups[intervalStart].count++;
+    });
+
+    const alertIntervals = Object.values(intervalGroups)
+      .map(group => ({
+        timestamp: group.timestamp,
+        avgDb: parseFloat((group.sum / group.count).toFixed(1)),
+        count: group.count
+      }))
+      .filter(interval => interval.avgDb > 60)
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 20);
+
+    if (alertIntervals.length === 0) {
+      logsContainer.innerHTML = '<div style="opacity:0.5;font-style:italic">Nenhum evento de alto ruído (média 3min > 60dB).</div>';
+      return;
+    }
+
+    alertIntervals.forEach(interval => {
       const el = document.createElement('div');
       el.style.padding = '4px 0';
       el.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
       el.style.color = '#f88';
-      const time = new Date(e.timestamp).toLocaleTimeString();
-      el.textContent = `[${time}] Alerta: ${e.db}dB detectado`;
+
+      const time = new Date(interval.timestamp).toLocaleTimeString();
+      const endTime = new Date(interval.timestamp + THREE_MINUTES).toLocaleTimeString();
+
+      el.textContent = `[${time}] Alerta: Média de ${interval.avgDb}dB (${interval.count} leituras)`;
       logsContainer.appendChild(el);
     });
   }
 
   refreshBtn.addEventListener('click', fetchDevices);
 
+  // ========================================
+  // Data Aggregation
+  // Agrupa os dados por minuto para o gráfico.
+  // ========================================
   function aggregateByMinute(entries) {
     const groups = {};
     entries.forEach(e => {
@@ -251,7 +303,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // func: Pega o nome do usuário.
+  // ========================================
+  // User Info
+  // Busca e exibe o nome do usuário logado.
+  // ========================================
   async function fetchUser() {
     const usernameEl = document.getElementById('username');
     const avatarEl = document.getElementById('avatar');
@@ -287,12 +342,11 @@ document.addEventListener('DOMContentLoaded', () => {
     userMenuBtn.setAttribute('aria-expanded', 'false');
   }
 
-  // Para lidar com problemas de escala.
+  // Garante que a sidebar esteja expandida antes de mostrar o menu
   function ensureSidebarExpandedAndThen(cb) {
     const isMobile = window.matchMedia('(max-width:900px)').matches;
 
     if (isMobile) {
-      // Mobile
       const alreadyOpen = sidebar.classList.contains('open');
       if (!alreadyOpen) {
         sidebar.classList.add('open');
@@ -302,7 +356,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       cb();
     } else {
-      // Desktop
       const isCollapsed = sidebar.classList.contains('collapsed');
       if (isCollapsed) {
         sidebar.classList.remove('collapsed');
@@ -314,7 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Novo click
+
   userMenuBtn.addEventListener('click', (e) => {
     e.stopPropagation();
 
@@ -330,7 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Click fora/fechar
+  // Fecha o menu se clicar fora dele
   document.addEventListener('click', (e) => {
     if (!userMenu.contains(e.target) && !userMenuBtn.contains(e.target)) {
       hideUserMenu();
@@ -338,22 +391,24 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // ------------------------------
 
-  // TEMPORÁRIO!!!
+  // ========================================
+  // Change Password (TEMPORÁRIO)
+  // ========================================
   changePasswordBtn.addEventListener('click', () => {
     alert('Trocar senha — funcionalidade não implementada ainda.');
   });
-  //---------------
 
-  // Initial
+  // ========================================
+  // Initialization & Auto-refresh
+  // Carrega os devices e atualiza a cada 5 segundos.
+  // ========================================
   fetchDevices();
   fetchUser();
 
-  // Auto-refresh devices every 10s
   setInterval(() => {
     fetchDevices();
-    // Also refresh data if a device is selected
     if (selectedDevice) {
       fetchDeviceData(selectedDevice);
     }
-  }, 5000); // Increased frequency to 5s for better responsiveness
+  }, 5000);
 });

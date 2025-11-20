@@ -15,7 +15,7 @@ function getRandomDb() {
 
 async function sendData() {
   count++;
-  const db = getRandomDb();
+  const db = getRandomDb() - 20;
   const timestamp = Date.now();
 
   const payload = {

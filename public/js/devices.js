@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Custom Modal Functions
+  // ========================================
+  // Custom Modal System
+  // Substitui os alert/prompt/confirm nativos por modais customizados.
+  // ========================================
   const modal = document.getElementById('customModal');
   const modalTitle = document.getElementById('modalTitle');
   const modalMessage = document.getElementById('modalMessage');
@@ -22,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
       modalInput.style.display = 'none';
       modalConfirm.textContent = confirmBtnText;
 
-      // Change button style based on danger level
       modalConfirm.className = 'btn ' + (isDanger ? 'btn-danger' : 'btn-success');
 
       showModal();
@@ -92,7 +94,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Sidebar toggle
+  // ========================================
+  // Sidebar & Navigation
+  // ========================================
   const sidebar = document.getElementById('sidebar');
   const toggleBtn = document.getElementById('toggleSidebar');
   toggleBtn.addEventListener('click', () => {
@@ -103,7 +107,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // ========================================
   // Logout
+  // ========================================
   const logoutBtn = document.getElementById('logoutBtn');
   logoutBtn.addEventListener('click', async () => {
     try {
@@ -116,7 +122,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Device list
+  // ========================================
+  // Device List & Management
+  // Lista, seleciona e gerencia devices (renomear, limpar, deletar).
+  // ========================================
   const deviceList = document.getElementById('deviceList');
   const refreshBtn = document.getElementById('refreshDevices');
   const deviceDetails = document.getElementById('deviceDetails');
@@ -188,16 +197,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const firstDate = stats.firstActivity ? new Date(stats.firstActivity).toLocaleString() : 'N/A';
     const lastDate = stats.lastActivity ? new Date(stats.lastActivity).toLocaleString() : 'N/A';
 
-    // Clear previous content
     deviceDetails.innerHTML = '';
 
-    // Title
     const title = document.createElement('h2');
     title.style.margin = '0 0 20px 0';
     title.textContent = deviceId.replace('.json', '');
     deviceDetails.appendChild(title);
 
-    // Stats container
+
     const statsContainer = document.createElement('div');
     statsContainer.style.cssText = 'background:rgba(255,255,255,0.02);padding:16px;border-radius:8px;margin-bottom:20px';
     statsContainer.innerHTML = `
@@ -219,17 +226,14 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     deviceDetails.appendChild(statsContainer);
 
-    // Actions title
     const actionsTitle = document.createElement('h3');
     actionsTitle.style.cssText = 'margin:0 0 12px 0;font-size:14px;opacity:0.8';
     actionsTitle.textContent = 'Ações';
     deviceDetails.appendChild(actionsTitle);
 
-    // Actions container
     const actionsContainer = document.createElement('div');
     actionsContainer.style.cssText = 'display:flex;flex-direction:column;gap:10px';
 
-    // Rename button
     const renameBtn = document.createElement('button');
     renameBtn.className = 'btn';
     renameBtn.style.cssText = 'width:100%;justify-content:center;display:flex;align-items:center';
@@ -241,7 +245,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     actionsContainer.appendChild(renameBtn);
 
-    // Clear button
     const clearBtn = document.createElement('button');
     clearBtn.className = 'btn btn-warning';
     clearBtn.style.cssText = 'width:100%;justify-content:center;border-color:rgba(255,193,7,0.3);display:flex;align-items:center';
@@ -253,7 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     actionsContainer.appendChild(clearBtn);
 
-    // Delete button
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
     deleteBtn.style.cssText = 'width:100%;justify-content:center;border-color:rgba(244,67,54,0.3);display:flex;align-items:center';
@@ -370,7 +372,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   refreshBtn.addEventListener('click', fetchDevices);
 
-  // User menu setup
+  // ========================================
+  // User Menu
+  // Menu do usuário com opções de trocar senha e logout.
+  // ========================================
   const userMenuBtn = document.getElementById('userMenuBtn');
   const userMenu = document.getElementById('userMenu');
   const changePasswordBtn = document.getElementById('changePassword');
@@ -430,7 +435,10 @@ document.addEventListener('DOMContentLoaded', () => {
     alert('Trocar senha — funcionalidade não implementada ainda.');
   });
 
-  // Get user info
+  // ========================================
+  // User Info
+  // Busca e exibe informações do usuário logado.
+  // ========================================
   async function fetchUser() {
     const usernameEl = document.getElementById('username');
     const avatarEl = document.getElementById('avatar');
@@ -448,7 +456,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Initial load
+  // ========================================
+  // Initialization
+  // ========================================
   fetchDevices();
   fetchUser();
 });
