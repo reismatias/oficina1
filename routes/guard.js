@@ -14,7 +14,7 @@ function requireAuth(req, res, next) {
 
     // PARA APIs
     if (req.path.startsWith('/api') || req.originalUrl.startsWith('/api') ||
-        req.path.startsWith('/auth') || req.originalUrl.startsWith('/auth')) {
+      req.path.startsWith('/auth') || req.originalUrl.startsWith('/auth')) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
@@ -57,6 +57,16 @@ router.get('/dashboard', requireAuth, (req, res) => {
 // /dashboard.html
 router.get('/dashboard.html', requireAuth, (req, res) => {
   return res.sendFile(path.join(PUBLIC_DIR, 'dashboard.html'));
+});
+
+// devices
+router.get('/devices', requireAuth, (req, res) => {
+  return res.sendFile(path.join(PUBLIC_DIR, 'devices.html'));
+});
+
+// /devices.html
+router.get('/devices.html', requireAuth, (req, res) => {
+  return res.sendFile(path.join(PUBLIC_DIR, 'devices.html'));
 });
 
 // /api/user

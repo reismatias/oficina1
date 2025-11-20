@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { listDevices, getDeviceData, saveDeviceData } = require('../services/deviceService');
+const { listDevices, getDeviceData, saveDeviceData, getDeviceStats, deleteDevice, clearDeviceData, renameDevice } = require('../services/deviceService');
 const { logger } = require('../utils/logger');
 
 // ----- API: list devices with limited entries -----
@@ -41,10 +41,72 @@ router.post('/dados', async (req, res) => {
 
   try {
     const filename = await saveDeviceData(deviceId, req.body);
-    return res.status(200).json({ message: `Dados recebidos e salvos no arquivo ${filename}` });
+    return res.status(200).json({ message: `Dados recebidos e salvos no banco de dados (device: ${filename})` });
   } catch (err) {
     logger.error('Erro ao salvar os dados: ' + (err && err.message));
     return res.status(500).json({ message: 'Erro ao salvar os dados' });
+  }
+});
+
+// ----- Device Management Routes -----
+router.get('/api/devices/:id/stats', async (req, res) => {
+  if (!req.session || !req.session.username) return res.status(401).json({ message: 'Unauthorized' });
+
+  const deviceId = req.params.id;
+
+  try {
+    const stats = await getDeviceStats(deviceId);
+    return res.json(stats);
+  } catch (err) {
+    logger.error('Error getting device stats: ' + (err && err.message));
+    return res.status(500).json({ message: 'Erro ao obter estatísticas' });
+  }
+});
+
+router.delete('/api/devices/:id', async (req, res) => {
+  if (!req.session || !req.session.username) return res.status(401).json({ message: 'Unauthorized' });
+
+  const deviceId = req.params.id;
+
+  try {
+    const numRemoved = await deleteDevice(deviceId);
+    return res.json({ message: `Device deletado com sucesso (${numRemoved} registros removidos)` });
+  } catch (err) {
+    logger.error('Error deleting device: ' + (err && err.message));
+    return res.status(500).json({ message: 'Erro ao deletar device' });
+  }
+});
+
+router.delete('/api/devices/:id/data', async (req, res) => {
+  if (!req.session || !req.session.username) return res.status(401).json({ message: 'Unauthorized' });
+
+  const deviceId = req.params.id;
+
+  try {
+    const numRemoved = await clearDeviceData(deviceId);
+    return res.json({ message: `Dados limpos com sucesso (${numRemoved} registros removidos)` });
+  } catch (err) {
+    logger.error('Error clearing device data: ' + (err && err.message));
+    return res.status(500).json({ message: 'Erro ao limpar dados' });
+  }
+});
+
+router.put('/api/devices/:id', async (req, res) => {
+  if (!req.session || !req.session.username) return res.status(401).json({ message: 'Unauthorized' });
+
+  const oldId = req.params.id;
+  const { newId } = req.body;
+
+  if (!newId) {
+    return res.status(400).json({ message: 'newId é obrigatório' });
+  }
+
+  try {
+    const numUpdated = await renameDevice(oldId, newId);
+    return res.json({ message: `Device renomeado com sucesso (${numUpdated} registros atualizados)` });
+  } catch (err) {
+    logger.error('Error renaming device: ' + (err && err.message));
+    return res.status(500).json({ message: err.message || 'Erro ao renomear device' });
   }
 });
 

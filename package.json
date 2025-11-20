@@ -6,7 +6,8 @@
     "start": "node app.js",
     "dev": "nodemon app.js",
     "redis:up": "docker compose up -d",
-    "redis:down": "docker compose down"
+    "redis:down": "docker compose down",
+    "test": "node test-api.js"
   },
   "keywords": [],
   "author": "",

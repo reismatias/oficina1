@@ -1,11 +1,14 @@
 <!doctype html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Dashboard - Projeto de Oficina</title>
   <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body class="dashboard-layout">
   <aside id="sidebar" class="sidebar">
     <div class="brand">
@@ -13,8 +16,8 @@
       <div class="label">Projeto de Oficina</div>
     </div>
     <nav class="nav">
-      <a href="#" class="active"><span class="icon">🏠</span><span class="label">Dashboard</span></a>
-      <a href="#"><span class="icon">📡</span><span class="label">Integração de dados</span></a>
+      <a href="/dashboard" class="active"><span class="icon">🏠</span><span class="label">Dashboard</span></a>
+      <a href="/devices"><span class="icon">📡</span><span class="label">Gerenciar Devices</span></a>
       <a href="#"><span class="icon">⚙️</span><span class="label">Ajuste de rotas</span></a>
     </nav>
     <div style="flex:1"></div>
@@ -44,28 +47,41 @@
       </div>
     </div>
 
-    <div class="content">
-      <section class="panel devices">
-        <h3 style="margin:0 0 10px 0">Devices</h3>
-        <div id="deviceList" style="overflow:auto;flex:1;padding-right:6px"></div>
-        <div style="margin-top:8px;display:flex;gap:8px">
-          <button id="refreshDevices" class="btn">Atualizar</button>
-          <button id="collapseSidebar" class="btn">⇤</button>
+    <div class="content" style="flex-direction: column; gap: 18px;">
+      <!-- Top: Chart -->
+      <section class="panel" style="flex: 1; min-height: 300px; display:flex;flex-direction:column;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <h3 style="margin:0">Métricas</h3>
+          <div style="font-size:13px;opacity:.8">Última atualização: <span id="lastUpdate">—</span></div>
+        </div>
+        <div id="chartArea" style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;">
+          <canvas id="myChart" style="width:100%;height:100%"></canvas>
         </div>
       </section>
 
-      <section class="panel" style="flex:2;display:flex;flex-direction:column;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div style="font-weight:700">Métricas</div>
-          <div style="font-size:13px;opacity:.8">Última atualização: <span id="lastUpdate">—</span></div>
-        </div>
-        <div id="chartArea" style="flex:1;display:flex;align-items:center;justify-content:center">
-          <div style="text-align:center;opacity:.6">Gráfico placeholder (integração será adicionada depois)</div>
-        </div>
-      </section>
+      <!-- Bottom: Logs and Devices -->
+      <div style="flex: 1; display: flex; gap: 18px; min-height: 300px;">
+        <!-- Bottom Left: Logs -->
+        <section class="panel" style="flex: 1; display:flex;flex-direction:column;">
+          <h3 style="margin:0 0 10px 0">Log de Eventos</h3>
+          <div id="eventLogs" style="overflow:auto;flex:1;font-family:monospace;font-size:13px;opacity:0.9;">
+            <div style="opacity:0.5;font-style:italic">Nenhum evento registrado.</div>
+          </div>
+        </section>
+
+        <!-- Bottom Right: Devices -->
+        <section class="panel devices" style="flex: 1; width: auto;">
+          <h3 style="margin:0 0 10px 0">Devices</h3>
+          <div id="deviceList" style="overflow:auto;flex:1;padding-right:6px"></div>
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button id="refreshDevices" class="btn">Atualizar</button>
+          </div>
+        </section>
+      </div>
     </div>
   </main>
 
   <script src="/js/dashboard.js"></script>
 </body>
+
 </html>
