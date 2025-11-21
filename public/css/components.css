@@ -12,6 +12,10 @@
   backdrop-filter: blur(10px);
 }
 
+.mobile-only-button {
+  display: none;
+}
+
 .btn:hover {
   background: var(--glass-hover);
   border-color: rgba(255, 255, 255, 0.15);

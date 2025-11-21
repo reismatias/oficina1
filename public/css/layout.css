@@ -247,6 +247,10 @@ body.dashboard-layout {
    Responsive
    ======================================== */
 @media (max-width: 900px) {
+  .mobile-only-button {
+    display: block;
+  }
+
   .sidebar {
     position: fixed;
     z-index: 30;
