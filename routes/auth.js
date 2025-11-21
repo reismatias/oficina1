@@ -1,3 +1,7 @@
+// ========================================
+// Authentication Routes
+// Rotas de login, logout e status de autenticação.
+// ========================================
 const express = require('express');
 const bcrypt = require('bcrypt');
 const path = require('path');
@@ -7,6 +11,7 @@ const { requireAuth } = require('./guard');
 
 const router = express.Router();
 
+// POST /login - Autentica o usuário
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   const ip = req.ip || req.connection.remoteAddress;
@@ -36,6 +41,7 @@ router.post('/login', async (req, res) => {
   res.json({ message: 'ok' });
 });
 
+// POST /logout - Destrói a sessão do usuário
 router.post('/logout', (req, res) => {
   const username = req.session && req.session.username;
   const ip = req.ip || req.connection.remoteAddress;
@@ -47,6 +53,7 @@ router.post('/logout', (req, res) => {
   });
 });
 
+// GET /auth/status - Retorna informações do usuário autenticado
 router.get('/auth/status', requireAuth, (req, res) => {
   return res.json({
     authenticated: true,

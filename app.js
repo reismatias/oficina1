@@ -1,4 +1,7 @@
-// app.js
+// ========================================
+// Server Configuration
+// Entry point da aplicação. Configura Express, middlewares e rotas.
+// ========================================
 require('dotenv').config();
 
 const express = require('express');
@@ -16,11 +19,12 @@ const app = express();
 const PORT = process.env.PORT || 3333;
 const INACTIVITY_MS = Number(process.env.SESSION_INACTIVITY_MS) || 1000 * 60 * 15;
 
-// Express parsers (lightweight, before session init)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// small helper to get local IP for console output
+// ========================================
+// Helper Functions
+// ========================================
 const getLocalIp = () => {
   const interfaces = os.networkInterfaces();
   for (const iface of Object.values(interfaces || {})) {
@@ -29,38 +33,33 @@ const getLocalIp = () => {
   return '127.0.0.1';
 };
 
-// Start server after setting up session middleware
+// ========================================
+// Server Initialization
+// Configura sessões (Redis ou memória) e inicia o servidor.
+// ========================================
 async function startServer() {
   const { sessionMiddleware, usingRedis } = await setupSessionMiddleware();
 
-  // Apply session middleware
   app.use((req, res, next) => sessionMiddleware(req, res, next));
 
-  // Apply session timeout/inactivity middleware (must come after session middleware)
   app.use(sessionTimeout({
     maxAgeMs: MAX_SESSION_AGE_MS,
     inactivityMs: INACTIVITY_MS
   }));
 
-  // Mount auth routes BEFORE static so POST /logout works and /login route override works
+  // Rotas de autenticação (deve vir antes dos assets estáticos)
   app.use('/', authRouter);
 
-  // Serve static assets (css/js/images)
+  // Assets estáticos (CSS, JS, imagens)
   app.use(express.static(path.join(__dirname, 'public')));
 
-  // Mount API routes
+  // Rotas da API
   app.use(apiRouter);
 
-  // Rota de Login (redundant mount removed if not strictly necessary, but keeping consistent with original if it was intended for specific matching order. Original had it twice. I will keep it once at the top as it was, and maybe the second one was unnecessary. The first one is mounted at '/', so it handles /login. The second one in original was also app.use(authRouter) which defaults to /. I will stick to one mount at the top.)
-  // Actually, looking at original:
-  // Line 181: app.use('/', authRouter);
-  // Line 252: app.use(authRouter);
-  // I'll assume the first one is sufficient.
-
-  // Rotas protegida
+  // Rotas protegidas (dashboard, devices, etc)
   app.use('/', guardRouter);
 
-  // Start listening
+  // Inicia o servidor
   app.listen(PORT, '0.0.0.0', () => {
     const localIp = getLocalIp();
     logEvent('SERVER_START', { info: `Listening on http://${localIp}:${PORT} | sessions:${usingRedis ? 'redis' : 'memory'}` });
@@ -83,7 +82,9 @@ async function startServer() {
   });
 }
 
-// Kick off
+// ========================================
+// Start Application
+// ========================================
 startServer().catch(err => {
   logger.error('Failed to start server: ' + (err && err.stack ? err.stack : err));
   process.exit(1);

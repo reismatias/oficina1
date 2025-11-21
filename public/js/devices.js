@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.classList.remove('show');
   }
 
+  // ========================================
+  // Confirm Dialog
+  // ========================================
   function showConfirmDialog(title, message, confirmBtnText = 'Confirmar', isDanger = false) {
     return new Promise((resolve) => {
       modalTitle.textContent = title;
@@ -51,6 +54,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ========================================
+  // Prompt Dialog
+  // ========================================
   function showPromptDialog(title, message, defaultValue = '') {
     return new Promise((resolve) => {
       modalTitle.textContent = title;
@@ -95,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ========================================
-  // Sidebar & Navigation
+  // Sidebar & Navegação
   // ========================================
   const sidebar = document.getElementById('sidebar');
   const toggleBtn = document.getElementById('toggleSidebar');
@@ -123,7 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ========================================
-  // Device List & Management
   // Lista, seleciona e gerencia devices (renomear, limpar, deletar).
   // ========================================
   const deviceList = document.getElementById('deviceList');

@@ -1,18 +1,26 @@
 #!/usr/bin/env node
-// test-api.js
-// Script para simular o ESP32 enviando dados para a API
+// ========================================
+// ESP32 Simulator - Test API
+// Script para simular o ESP32 enviando dados para a API.
+// ========================================
 
+// ========================================
+// Configuration
+// ========================================
 const BASE_URL = process.env.API_URL || 'http://localhost:3333';
 const DEVICE_ID = process.env.DEVICE_ID || 'test_device_simulated';
 const INTERVAL_MS = parseInt(process.env.INTERVAL_MS) || 5000;
 
 let count = 0;
 
+// ========================================
+// Helper Functions
+// ========================================
 function getRandomDb() {
-  // Gera valor aleatório entre 20 e 100
   return Math.floor(Math.random() * (100 - 20 + 1)) + 20;
 }
 
+// Envia dados simulados para a API
 async function sendData() {
   count++;
   const db = getRandomDb() - 20;
@@ -45,6 +53,9 @@ async function sendData() {
   }
 }
 
+// ========================================
+// Startup & Execution
+// ========================================
 console.log('========================================');
 console.log('  Simulador de ESP32 - Teste de API');
 console.log('========================================');
@@ -55,13 +66,10 @@ console.log('----------------------------------------');
 console.log('  Pressione Ctrl+C para parar');
 console.log('========================================\n');
 
-// Envia o primeiro imediatamente
 sendData();
 
-// Configura intervalo para envios subsequentes
 const interval = setInterval(sendData, INTERVAL_MS);
 
-// Lida com Ctrl+C
 process.on('SIGINT', () => {
   console.log('\n\n========================================');
   console.log(`  Teste finalizado!`);

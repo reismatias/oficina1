@@ -1,24 +1,13 @@
+// ========================================
+// Device Service
+// Camada de serviço para gerenciar devices no NeDB.
+// ========================================
 const db = require('./db');
 const { logger } = require('../utils/logger');
 
+// Lista todos os devices distintos que já enviaram dados
 async function listDevices() {
   try {
-    // NeDB doesn't have distinct query easily, so we fetch all and filter unique device_ids
-    // For performance with large datasets, we might want a separate collection for devices,
-    // but for now this is better than reading 500 files.
-    // Actually, fetching ALL docs to find distinct is slow if millions of rows.
-    // But NeDB is in-memory (mostly) or append-only.
-    // Optimization: Maintain a separate 'devices' set or just query.
-    // Let's try to find unique device_ids.
-    // Since NeDB is not SQL, we can't do SELECT DISTINCT.
-    // We can find all, but projection { device_id: 1 } helps.
-
-    // However, for a quick migration, let's assume the number of devices is small
-    // even if readings are many.
-    // A better approach for NeDB: maintain a separate 'metadata' doc or collection.
-    // For now, let's just return the list of devices that have sent data recently?
-    // Or we can just query all with projection.
-
     const docs = await db.find({}, { device_id: 1 });
     const uniqueIds = [...new Set(docs.map(d => d.device_id))];
     return uniqueIds.map(id => ({ device_id: id, filename: id }));
@@ -28,11 +17,11 @@ async function listDevices() {
   }
 }
 
+// Busca os últimos 500 registros de um device específico
 async function getDeviceData(deviceId) {
   if (!deviceId) throw new Error('Invalid deviceId');
 
   try {
-    // Get last 500 entries
     const docs = await db.find({ device_id: deviceId })
       .sort({ timestamp: -1 })
       .limit(500);
@@ -44,7 +33,6 @@ async function getDeviceData(deviceId) {
       _ts: d.timestamp
     }));
 
-    // Reverse to chronological order
     entries.reverse();
 
     return { filename: deviceId, entries };
@@ -54,6 +42,7 @@ async function getDeviceData(deviceId) {
   }
 }
 
+// Salva uma nova medição de um device
 async function saveDeviceData(deviceId, data) {
   if (!deviceId) throw new Error('device_id is required');
 
@@ -73,6 +62,7 @@ async function saveDeviceData(deviceId, data) {
   }
 }
 
+// Retorna estatísticas de um device (total de registros, primeira e última atividade)
 async function getDeviceStats(deviceId) {
   if (!deviceId) throw new Error('Invalid deviceId');
 
@@ -101,6 +91,7 @@ async function getDeviceStats(deviceId) {
   }
 }
 
+// Deleta permanentemente um device e todos os seus dados
 async function deleteDevice(deviceId) {
   if (!deviceId) throw new Error('Invalid deviceId');
 
@@ -114,6 +105,7 @@ async function deleteDevice(deviceId) {
   }
 }
 
+// Limpa todos os dados de um device (mantém o device)
 async function clearDeviceData(deviceId) {
   if (!deviceId) throw new Error('Invalid deviceId');
 
@@ -127,18 +119,17 @@ async function clearDeviceData(deviceId) {
   }
 }
 
+// Renomeia um device (atualiza todos os registros)
 async function renameDevice(oldId, newId) {
   if (!oldId || !newId) throw new Error('Both oldId and newId are required');
   if (oldId === newId) throw new Error('New ID must be different from old ID');
 
   try {
-    // Check if new ID already exists
     const existing = await db.findOne({ device_id: newId });
     if (existing) {
       throw new Error('Device with new ID already exists');
     }
 
-    // Update all records
     const numUpdated = await db.update(
       { device_id: oldId },
       { $set: { device_id: newId } },

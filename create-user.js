@@ -1,11 +1,15 @@
-// create-user.js
+// ========================================
+// Create User
+// Script para criar um novo usuário.
+// ========================================
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcrypt');
 
 const USERS_FILE = path.join(__dirname, 'users.json');
 
-async function createUser(username, password, role='admin') {
+// Cria um novo usuário
+async function createUser(username, password, role = 'admin') {
   const hash = await bcrypt.hash(password, 10);
   let users = {};
   if (fs.existsSync(USERS_FILE)) {
@@ -16,7 +20,8 @@ async function createUser(username, password, role='admin') {
   console.log(`Created user ${username}`);
 }
 
-const [,, username, password] = process.argv;
+// Pega os argumentos do processo
+const [, , username, password] = process.argv;
 if (!username || !password) {
   console.log('Usage: node create-user.js <username> <password>');
   process.exit(1);

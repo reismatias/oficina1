@@ -3,7 +3,10 @@ const router = express.Router();
 const { listDevices, getDeviceData, saveDeviceData, getDeviceStats, deleteDevice, clearDeviceData, renameDevice } = require('../services/deviceService');
 const { logger } = require('../utils/logger');
 
-// ----- API: list devices with limited entries -----
+// ========================================
+// Device Data API
+// Endpoints para listar devices e buscar dados de um device específico.
+// ========================================
 router.get('/api/dados', async (req, res) => {
   if (!req.session || !req.session.username) return res.status(401).json({ message: 'Unauthorized' });
 
@@ -34,7 +37,10 @@ router.get('/api/dados/:filename', async (req, res) => {
   }
 });
 
-// ----- Device ingestion endpoint (ESP32) -----
+// ========================================
+// Data Ingestion
+// Endpoint para ESP32 enviar dados de medições.
+// ========================================
 router.post('/dados', async (req, res) => {
   const deviceId = req.body.device_id;
   if (!deviceId) return res.status(400).json({ message: 'device_id é obrigatório' });
@@ -48,7 +54,12 @@ router.post('/dados', async (req, res) => {
   }
 });
 
-// ----- Device Management Routes -----
+// ========================================
+// Device Management
+// CRUD operations para gerenciar devices (stats, delete, clear, rename).
+// ========================================
+
+// Get device statistics
 router.get('/api/devices/:id/stats', async (req, res) => {
   if (!req.session || !req.session.username) return res.status(401).json({ message: 'Unauthorized' });
 
