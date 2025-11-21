@@ -1,34 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
   // ========================================
-  // Sidebar & Navigation
-  // ========================================
-  const sidebar = document.getElementById('sidebar');
-  const toggleBtn = document.getElementById('toggleSidebar');
-  toggleBtn.addEventListener('click', () => {
-    if (window.matchMedia('(max-width:900px)').matches) {
-      sidebar.classList.toggle('open');
-    } else {
-      sidebar.classList.toggle('collapsed');
-    }
-  });
-
-  // ========================================
-  // Logout
-  // ========================================
-  const logoutBtn = document.getElementById('logoutBtn');
-  logoutBtn.addEventListener('click', async () => {
-    try {
-      const res = await fetch('/logout', { method: 'POST', credentials: 'same-origin' });
-      if (res.ok) location.href = '/login';
-      else {
-        alert('Erro ao deslogar.');
-      }
-    } catch (err) {
-      console.error(err); alert('Falha ao chamar /logout');
-    }
-  });
-
-  // ========================================
   // Device List & Selection
   // Lista todos os devices e mantém o selecionado.
   // ========================================
@@ -38,17 +9,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let selectedDevice = null;
 
+  // ========================================
+  // Chart Resize Observer
+  // Garante que o gráfico se redimensione corretamente
+  // quando a sidebar é alternada.
+  // ========================================
+  const chartArea = document.getElementById('chartArea');
+  if (chartArea) {
+    const resizeObserver = new ResizeObserver(() => {
+      if (myChart) {
+        console.log('📏 [DEBUG] ResizeObserver triggered, resizing chart...');
+        myChart.resize();
+      }
+    });
+    resizeObserver.observe(chartArea);
+  }
+
   async function fetchDevices() {
+    console.log('🔄 [DEBUG] Buscando devices...');
     try {
       const res = await fetch('/api/dados');
       if (!res.ok) throw new Error('Não foi possível listar devices');
       const data = await res.json();
+      console.log('📦 [DEBUG] Dados recebidos:', data);
       renderDevices(data.devices || []);
     } catch (err) {
-      console.error(err);
+      console.error('❌ [DEBUG] Erro ao buscar devices:', err);
       deviceList.innerHTML = '<div style="color:#f88">Erro ao carregar devices</div>';
     }
   }
+
+  refreshBtn.addEventListener('click', () => {
+    console.log('🔄 [DEBUG] Botão Atualizar clicado');
+    fetchDevices();
+  });
 
   function renderDevices(items) {
     deviceList.innerHTML = '';
@@ -304,106 +298,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ========================================
-  // User Info
-  // Busca e exibe o nome do usuário logado.
-  // ========================================
-  async function fetchUser() {
-    const usernameEl = document.getElementById('username');
-    const avatarEl = document.getElementById('avatar');
-
-    try {
-      const res = await fetch('/auth/status', { credentials: 'same-origin' });
-      if (!res.ok) throw new Error('Not authenticated');
-
-      const data = await res.json();
-
-      usernameEl.textContent = data.username.charAt(0).toUpperCase() + data.username.slice(1).toLowerCase();
-      avatarEl.textContent = usernameEl.textContent[0];
-    } catch (err) {
-      console.error(err);
-      usernameEl.textContent = 'Usuário';
-      avatarEl.textContent = 'U';
-    }
-  }
-
-  // --------------- User Menu ---------------
-  // Abre a side bar e depois abre o menu de opções.
-  const userMenuBtn = document.getElementById('userMenuBtn');
-  const userMenu = document.getElementById('userMenu');
-  const changePasswordBtn = document.getElementById('changePassword');
-
-  function showUserMenu() {
-    userMenu.removeAttribute('hidden');
-    userMenuBtn.setAttribute('aria-expanded', 'true');
-  }
-
-  function hideUserMenu() {
-    userMenu.setAttribute('hidden', '');
-    userMenuBtn.setAttribute('aria-expanded', 'false');
-  }
-
-  // Garante que a sidebar esteja expandida antes de mostrar o menu
-  function ensureSidebarExpandedAndThen(cb) {
-    const isMobile = window.matchMedia('(max-width:900px)').matches;
-
-    if (isMobile) {
-      const alreadyOpen = sidebar.classList.contains('open');
-      if (!alreadyOpen) {
-        sidebar.classList.add('open');
-
-        setTimeout(cb, 220);
-        return;
-      }
-      cb();
-    } else {
-      const isCollapsed = sidebar.classList.contains('collapsed');
-      if (isCollapsed) {
-        sidebar.classList.remove('collapsed');
-
-        setTimeout(cb, 220);
-        return;
-      }
-      cb();
-    }
-  }
-
-
-  userMenuBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-
-    const hidden = userMenu.hasAttribute('hidden');
-    if (hidden) {
-      ensureSidebarExpandedAndThen(() => {
-        showUserMenu();
-        const first = userMenu.querySelector('button, [tabindex]');
-        if (first) first.focus();
-      });
-    } else {
-      hideUserMenu();
-    }
-  });
-
-  // Fecha o menu se clicar fora dele
-  document.addEventListener('click', (e) => {
-    if (!userMenu.contains(e.target) && !userMenuBtn.contains(e.target)) {
-      hideUserMenu();
-    }
-  });
-  // ------------------------------
-
-  // ========================================
-  // Change Password (TEMPORÁRIO)
-  // ========================================
-  changePasswordBtn.addEventListener('click', () => {
-    alert('Trocar senha — funcionalidade não implementada ainda.');
-  });
-
-  // ========================================
   // Initialization & Auto-refresh
   // Carrega os devices e atualiza a cada 5 segundos.
   // ========================================
   fetchDevices();
-  fetchUser();
 
   setInterval(() => {
     fetchDevices();

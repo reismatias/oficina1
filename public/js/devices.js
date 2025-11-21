@@ -101,34 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ========================================
-  // Sidebar & Navegação
-  // ========================================
-  const sidebar = document.getElementById('sidebar');
-  const toggleBtn = document.getElementById('toggleSidebar');
-  toggleBtn.addEventListener('click', () => {
-    if (window.matchMedia('(max-width:900px)').matches) {
-      sidebar.classList.toggle('open');
-    } else {
-      sidebar.classList.toggle('collapsed');
-    }
-  });
-
-  // ========================================
-  // Logout
-  // ========================================
-  const logoutBtn = document.getElementById('logoutBtn');
-  logoutBtn.addEventListener('click', async () => {
-    try {
-      const res = await fetch('/logout', { method: 'POST', credentials: 'same-origin' });
-      if (res.ok) location.href = '/login';
-      else alert('Erro ao deslogar.');
-    } catch (err) {
-      console.error(err);
-      alert('Falha ao chamar /logout');
-    }
-  });
-
-  // ========================================
   // Lista, seleciona e gerencia devices (renomear, limpar, deletar).
   // ========================================
   const deviceList = document.getElementById('deviceList');
@@ -378,92 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
   refreshBtn.addEventListener('click', fetchDevices);
 
   // ========================================
-  // User Menu
-  // Menu do usuário com opções de trocar senha e logout.
-  // ========================================
-  const userMenuBtn = document.getElementById('userMenuBtn');
-  const userMenu = document.getElementById('userMenu');
-  const changePasswordBtn = document.getElementById('changePassword');
-
-  function showUserMenu() {
-    userMenu.removeAttribute('hidden');
-    userMenuBtn.setAttribute('aria-expanded', 'true');
-  }
-
-  function hideUserMenu() {
-    userMenu.setAttribute('hidden', '');
-    userMenuBtn.setAttribute('aria-expanded', 'false');
-  }
-
-  function ensureSidebarExpandedAndThen(cb) {
-    const isMobile = window.matchMedia('(max-width:900px)').matches;
-    if (isMobile) {
-      const alreadyOpen = sidebar.classList.contains('open');
-      if (!alreadyOpen) {
-        sidebar.classList.add('open');
-        setTimeout(cb, 220);
-        return;
-      }
-      cb();
-    } else {
-      const isCollapsed = sidebar.classList.contains('collapsed');
-      if (isCollapsed) {
-        sidebar.classList.remove('collapsed');
-        setTimeout(cb, 220);
-        return;
-      }
-      cb();
-    }
-  }
-
-  userMenuBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const hidden = userMenu.hasAttribute('hidden');
-    if (hidden) {
-      ensureSidebarExpandedAndThen(() => {
-        showUserMenu();
-        const first = userMenu.querySelector('button, [tabindex]');
-        if (first) first.focus();
-      });
-    } else {
-      hideUserMenu();
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!userMenu.contains(e.target) && !userMenuBtn.contains(e.target)) {
-      hideUserMenu();
-    }
-  });
-
-  changePasswordBtn.addEventListener('click', () => {
-    alert('Trocar senha — funcionalidade não implementada ainda.');
-  });
-
-  // ========================================
-  // User Info
-  // Busca e exibe informações do usuário logado.
-  // ========================================
-  async function fetchUser() {
-    const usernameEl = document.getElementById('username');
-    const avatarEl = document.getElementById('avatar');
-
-    try {
-      const res = await fetch('/auth/status', { credentials: 'same-origin' });
-      if (!res.ok) throw new Error('Not authenticated');
-      const data = await res.json();
-      usernameEl.textContent = data.username.charAt(0).toUpperCase() + data.username.slice(1).toLowerCase();
-      avatarEl.textContent = usernameEl.textContent[0];
-    } catch (err) {
-      console.error(err);
-      usernameEl.textContent = 'Usuário';
-      avatarEl.textContent = 'U';
-    }
-  }
-
-  // ========================================
   // Initialization
   // ========================================
   fetchDevices();
-  fetchUser();
 });

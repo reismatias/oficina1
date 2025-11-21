@@ -1,0 +1,37 @@
+/* ========================================
+   Variables
+   ======================================== */
+:root {
+  /* Sidebar dimensions */
+  --sidebar-w: 260px;
+  --sidebar-collapsed-w: 72px;
+
+  /* Background colors */
+  --bg-primary: #020617;
+  --bg-secondary: #0f172a;
+  --bg-tertiary: #1e293b;
+  --bg-gradient: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e293b 100%);
+
+  /* Accent colors */
+  --accent-blue: #3b82f6;
+  --accent-blue-dark: #2563eb;
+  --accent-purple: #8b5cf6;
+  --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+
+  /* Text colors */
+  --text-primary: #f1f5f9;
+  --text-secondary: rgba(255, 255, 255, 0.9);
+  --text-muted: rgba(255, 255, 255, 0.6);
+  --text-placeholder: rgba(255, 255, 255, 0.4);
+
+  /* Glass/Overlay */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-hover: rgba(255, 255, 255, 0.08);
+
+  /* Feedback colors */
+  --success: #22c55e;
+  --success-light: #86efac;
+  --error: #ef4444;
+  --error-light: #fca5a5;
+}

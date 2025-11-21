@@ -7,6 +7,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const os = require('os');
+const expressLayouts = require('express-ejs-layouts');
 
 const authRouter = require('./routes/auth');
 const { router: guardRouter } = require('./routes/guard');
@@ -18,6 +19,12 @@ const { setupSessionMiddleware, MAX_SESSION_AGE_MS } = require('./config/redis')
 const app = express();
 const PORT = process.env.PORT || 3333;
 const INACTIVITY_MS = Number(process.env.SESSION_INACTIVITY_MS) || 1000 * 60 * 15;
+
+// View engine configuration
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+app.use(expressLayouts);
+app.set('layout', 'layout');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

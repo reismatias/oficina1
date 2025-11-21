@@ -4,8 +4,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gerenciar Devices - Projeto de Oficina</title>
+  <title>
+    <%= title %> - Projeto de Oficina
+  </title>
   <link rel="stylesheet" href="/css/style.css">
+  <%- extraHead %>
 </head>
 
 <body class="dashboard-layout">
@@ -15,9 +18,10 @@
       <div class="label">Projeto de Oficina</div>
     </div>
     <nav class="nav">
-      <a href="/dashboard"><span class="icon">🏠</span><span class="label">Dashboard</span></a>
-      <a href="/devices" class="active"><span class="icon">📡</span><span class="label">Gerenciar Devices</span></a>
-      <a href="#"><span class="icon">⚙️</span><span class="label">Ajuste de rotas</span></a>
+      <a href="/dashboard" class="<%= page === 'dashboard' ? 'active' : '' %>"><span class="icon">🏠</span><span
+          class="label">Dashboard</span></a>
+      <a href="/devices" class="<%= page === 'devices' ? 'active' : '' %>"><span class="icon">⚙️</span><span
+          class="label">Gerenciar Devices</span></a>
     </nav>
     <div style="flex:1"></div>
 
@@ -38,31 +42,19 @@
     <div class="topbar">
       <div class="left-controls" style="display:flex;align-items:center;gap:12px">
         <button id="toggleSidebar" class="btn" title="Fechar barra lateral">☰</button>
-        <div class="title">Gerenciar Devices</div>
+        <div class="title">
+          <%= title %>
+        </div>
       </div>
       <div class="controls">
+        <div id="statusBadge" style="font-size:13px;opacity:.8">Conectado</div>
         <button id="logoutBtn" class="btn">Logout</button>
       </div>
     </div>
 
-    <div class="content" style="flex-direction: row; gap: 18px;">
-      <!-- Left: Device List -->
-      <section class="panel devices" style="flex: 0 0 280px; width: 280px;">
-        <h3 style="margin:0 0 12px 0">Devices</h3>
-        <div id="deviceList" style="overflow:auto;flex:1;padding-right:6px"></div>
-        <div style="margin-top:8px;display:flex;gap:8px">
-          <button id="refreshDevices" class="btn">Atualizar</button>
-        </div>
-      </section>
-
-      <!-- Right: Device Details -->
-      <section class="panel" style="flex: 1; display:flex;flex-direction:column;">
-        <div id="deviceDetails">
-          <div style="opacity:0.5;font-style:italic;text-align:center;padding:60px 20px">
-            Selecione um device para ver detalhes
-          </div>
-        </div>
-      </section>
+    <div class="content" <% if (typeof contentStyle !=='undefined' && contentStyle) { %> style="<%= contentStyle %>"<% }
+          %>>
+          <%- body %>
     </div>
   </main>
 
@@ -79,7 +71,8 @@
     </div>
   </div>
 
-  <script src="/js/devices.js"></script>
+  <script src="/js/layout.js"></script>
+  <%- extraScripts %>
 </body>
 
 </html>

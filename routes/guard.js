@@ -41,35 +41,48 @@ router.get('/', (req, res) => res.redirect('/login'));
 
 // login
 router.get('/login', requireGuest, (req, res) => {
-  return res.sendFile(path.join(PUBLIC_DIR, 'login.html'));
+  return res.render('login', { layout: false });
 });
 
 // /login.html
 router.get('/login.html', requireGuest, (req, res) => {
-  return res.sendFile(path.join(PUBLIC_DIR, 'login.html'));
+  return res.redirect('/login');
 });
 
 // dashboard
 router.get('/dashboard', requireAuth, (req, res) => {
-  return res.sendFile(path.join(PUBLIC_DIR, 'dashboard.html'));
+  return res.render('dashboard', {
+    page: 'dashboard',
+    title: 'Dashboard',
+    contentStyle: 'flex-direction: column; gap: 18px;',
+    extraHead: `
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    `,
+    extraScripts: '<script src="/js/dashboard.js"></script>'
+  });
 });
 
 // /dashboard.html
 router.get('/dashboard.html', requireAuth, (req, res) => {
-  return res.sendFile(path.join(PUBLIC_DIR, 'dashboard.html'));
+  return res.redirect('/dashboard');
 });
 
 // devices
 router.get('/devices', requireAuth, (req, res) => {
-  return res.sendFile(path.join(PUBLIC_DIR, 'devices.html'));
+  return res.render('devices', {
+    page: 'devices',
+    title: 'Gerenciar Devices',
+    contentStyle: 'flex-direction: row; gap: 18px;',
+    extraHead: '',
+    extraScripts: '<script src="/js/devices.js"></script>'
+  });
 });
 
 // /devices.html
 router.get('/devices.html', requireAuth, (req, res) => {
-  return res.sendFile(path.join(PUBLIC_DIR, 'devices.html'));
+  return res.redirect('/devices');
 });
-
-// /api/user
 
 module.exports = {
   router,

@@ -1,0 +1,265 @@
+/* ========================================
+   Dashboard Layout
+   ======================================== */
+body.dashboard-layout {
+  display: flex;
+  height: 100vh;
+}
+
+/* ========================================
+   Sidebar
+   ======================================== */
+.sidebar {
+  width: var(--sidebar-w);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.2s ease;
+  /* overflow: hidden;  <-- Removed to allow user menu to pop out if needed */
+  flex-shrink: 0;
+  /* Prevent sidebar from shrinking on small screens */
+  white-space: nowrap;
+}
+
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed-w);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 16px;
+  font-weight: 700;
+}
+
+.brand .logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--accent-gradient);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.nav {
+  flex: 1;
+  padding: 8px;
+}
+
+.nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+  margin: 6px 8px;
+  transition: all 0.2s ease;
+}
+
+.nav a:hover {
+  background: var(--glass-hover);
+}
+
+.nav a.active {
+  background: var(--accent-gradient);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.nav .icon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 18px;
+}
+
+.footer {
+  padding: 14px;
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.user-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.user-btn .name {
+  font-weight: 600;
+}
+
+.user-menu {
+  position: absolute;
+  left: 12px;
+  bottom: 64px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  padding: 8px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+  min-width: 160px;
+}
+
+.user-menu .btn {
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+}
+
+/* ========================================
+   Main Content
+   ======================================== */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.topbar {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(15, 23, 42, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.content {
+  flex: 1 1 0;
+  display: flex;
+  gap: 18px;
+  height: calc(100vh - 64px);
+  min-width: 0;
+  overflow: hidden;
+  padding: 16px;
+}
+
+/* ========================================
+   Collapsed Sidebar Styles
+   ======================================== */
+/* Label transitions for smooth collapse/expand */
+.sidebar .brand .label,
+.sidebar .nav a .label,
+.sidebar .footer .name {
+  opacity: 1;
+  max-width: 200px;
+  visibility: visible;
+  /* Delay na abertura: espera a sidebar crescer um pouco antes de mostrar o texto */
+  transition: opacity 0.2s ease 0.15s, max-width 0.2s ease 0.15s, visibility 0s linear 0.15s;
+}
+
+.sidebar.collapsed .brand .label,
+.sidebar.collapsed .nav a .label,
+.sidebar.collapsed .footer .name {
+  opacity: 0;
+  max-width: 0;
+  visibility: hidden;
+  overflow: hidden;
+  /* Fechamento rápido: esconde o texto imediatamente antes de encolher */
+  transition: opacity 0.1s ease, max-width 0.1s ease, visibility 0s linear 0.1s;
+}
+
+/* Ajuste para tornar o botão quadrado (36x36) igual ao logo quando colapsado */
+.sidebar.collapsed .nav a {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  margin: 16px auto;
+  /* Centraliza o quadrado na sidebar */
+  justify-content: center;
+  gap: 0;
+}
+
+.sidebar.collapsed .nav a .icon {
+  margin: 0;
+}
+
+.sidebar.collapsed .brand {
+  padding-left: 18px;
+  /* (72px - 36px logo) / 2 */
+  padding-right: 0;
+}
+
+.sidebar.collapsed .footer {
+  padding-left: 18px;
+  /* (72px - 36px avatar) / 2 */
+  padding-right: 0;
+}
+
+
+/* Adiciona transição suave para o padding */
+.sidebar .nav a,
+.sidebar .brand,
+.sidebar .footer {
+  transition: padding 0.3s ease;
+}
+
+/* ========================================
+   Responsive
+   ======================================== */
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    z-index: 30;
+    height: 100vh;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main {
+    margin-left: 0;
+  }
+}
