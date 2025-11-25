@@ -6,6 +6,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const deviceList = document.getElementById('deviceList');
   const refreshBtn = document.getElementById('refreshDevices');
   const lastUpdateEl = document.getElementById('lastUpdate');
+  const chartIntervalEl = document.getElementById('chartInterval');
+  const dbThresholdEl = document.getElementById('dbThreshold');
+
+  let currentInterval = 'realtime';
+  let currentThreshold = 60;
 
   let selectedDevice = null;
 
@@ -43,6 +48,26 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('🔄 [DEBUG] Botão Atualizar clicado');
     fetchDevices();
   });
+
+  if (chartIntervalEl) {
+    chartIntervalEl.addEventListener('change', (e) => {
+      currentInterval = e.target.value;
+      console.log('📊 [DEBUG] Intervalo alterado para:', currentInterval);
+      if (selectedDevice) {
+        fetchDeviceData(selectedDevice);
+      }
+    });
+  }
+
+  if (dbThresholdEl) {
+    dbThresholdEl.addEventListener('change', (e) => {
+      currentThreshold = parseInt(e.target.value) || 60;
+      console.log('📏 [DEBUG] Limite alterado para:', currentThreshold);
+      if (selectedDevice) {
+        fetchDeviceData(selectedDevice);
+      }
+    });
+  }
 
   function renderDevices(items) {
     deviceList.innerHTML = '';
@@ -139,12 +164,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderLogs(data.entries);
 
-    // Agrupa dados por minuto e mostra os últimos 30 minutos
-    const aggregated = aggregateByMinute(data.entries);
-    const recentAggregated = aggregated.slice(-30);
+    renderLogs(data.entries);
 
-    const labels = recentAggregated.map(e => new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    const values = recentAggregated.map(e => e.db);
+    // Processa os dados conforme o intervalo selecionado
+    const processedData = processDataByInterval(data.entries, currentInterval);
+
+    // Limita a quantidade de pontos para não travar o gráfico
+    // Se for realtime, pega os últimos 100. Se for média, pega mais.
+    const limit = currentInterval === 'realtime' ? 100 : 50;
+    const recentData = processedData.slice(-limit);
+
+    const labels = recentData.map(e => {
+      const d = new Date(e.timestamp);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    });
+    const values = recentData.map(e => e.db);
 
     // Atualiza o gráfico se já existir, senão cria um novo
     if (myChart) {
@@ -157,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
         data: {
           labels: labels,
           datasets: [{
-            label: 'Nível dB (Média/min)',
+            label: `Nível dB (${getIntervalLabel(currentInterval)})`,
             data: values,
             borderColor: 'rgba(75, 192, 192, 1)',
             backgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -187,14 +221,14 @@ document.addEventListener('DOMContentLoaded', () => {
               annotations: {
                 thresholdLine: {
                   type: 'line',
-                  yMin: 60,
-                  yMax: 60,
+                  yMin: currentThreshold,
+                  yMax: currentThreshold,
                   borderColor: 'rgba(244,67,54,0.8)',
                   borderWidth: 2,
                   borderDash: [5, 5],
                   label: {
                     display: true,
-                    content: 'Limite: 60dB',
+                    content: `Limite: ${currentThreshold}dB`,
                     position: 'end',
                     backgroundColor: 'rgba(244,67,54,0.8)',
                     color: '#fff',
@@ -214,7 +248,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ========================================
   // Event Logs
-  // Mostra alertas quando a média de 3 minutos ultrapassa 60dB.
+  // ========================================
+  // Event Logs
+  // Mostra alertas quando a média de 3 minutos ultrapassa o limite configurado.
+  // ========================================
   // ========================================
   function renderLogs(entries) {
     const logsContainer = document.getElementById('eventLogs');
@@ -245,12 +282,12 @@ document.addEventListener('DOMContentLoaded', () => {
         avgDb: parseFloat((group.sum / group.count).toFixed(1)),
         count: group.count
       }))
-      .filter(interval => interval.avgDb > 60)
+      .filter(interval => interval.avgDb > currentThreshold)
       .sort((a, b) => b.timestamp - a.timestamp)
       .slice(0, 20);
 
     if (alertIntervals.length === 0) {
-      logsContainer.innerHTML = '<div style="opacity:0.5;font-style:italic">Nenhum evento de alto ruído (média 3min > 60dB).</div>';
+      logsContainer.innerHTML = `<div style="opacity:0.5;font-style:italic">Nenhum evento de alto ruído (média 3min > ${currentThreshold}dB).</div>`;
       return;
     }
 
@@ -274,12 +311,29 @@ document.addEventListener('DOMContentLoaded', () => {
   // Data Aggregation
   // Agrupa os dados por minuto para o gráfico.
   // ========================================
-  function aggregateByMinute(entries) {
+  // ========================================
+  // Data Processing
+  // Processa os dados conforme o intervalo.
+  // ========================================
+  function processDataByInterval(entries, interval) {
+    if (!entries || entries.length === 0) return [];
+
+    // Se for realtime, retorna os dados brutos
+    if (interval === 'realtime') {
+      return entries.map(e => ({
+        timestamp: e.timestamp,
+        db: e.db
+      }));
+    }
+
+    // Se for média, agrupa por segundos
+    const seconds = parseInt(interval);
+    const ms = seconds * 1000;
     const groups = {};
+
     entries.forEach(e => {
-      const date = new Date(e.timestamp);
-      date.setSeconds(0, 0);
-      const key = date.getTime();
+      // Arredonda para o intervalo mais próximo
+      const key = Math.floor(e.timestamp / ms) * ms;
 
       if (!groups[key]) groups[key] = { sum: 0, count: 0 };
       groups[key].sum += e.db;
@@ -295,6 +349,12 @@ document.addEventListener('DOMContentLoaded', () => {
         db: parseFloat((g.sum / g.count).toFixed(1))
       };
     });
+  }
+
+  function getIntervalLabel(interval) {
+    if (interval === 'realtime') return 'Tempo Real';
+    if (interval === '60') return 'Média 1 min';
+    return `Média ${interval}s`;
   }
 
   // ========================================
