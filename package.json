@@ -27,7 +27,6 @@
     "winston": "^3.18.3",
     "winston-daily-rotate-file": "^5.0.0"
   },
-  "description": "",
   "devDependencies": {
     "nodemon": "^3.1.11"
   },
@@ -39,5 +38,6 @@
   "bugs": {
     "url": "https://github.com/reismatias/oficina1/issues"
   },
-  "homepage": "https://github.com/reismatias/oficina1#readme"
+  "homepage": "https://github.com/reismatias/oficina1#readme",
+  "description": ""
 }

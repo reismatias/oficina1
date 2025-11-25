@@ -22,7 +22,8 @@ async function getDeviceData(deviceId) {
   if (!deviceId) throw new Error('Invalid deviceId');
 
   try {
-    const docs = await db.find({ device_id: deviceId })
+    // Exclude config documents (type: 'config')
+    const docs = await db.find({ device_id: deviceId, type: { $ne: 'config' } })
       .sort({ timestamp: -1 })
       .limit(500);
 
@@ -67,7 +68,8 @@ async function getDeviceStats(deviceId) {
   if (!deviceId) throw new Error('Invalid deviceId');
 
   try {
-    const docs = await db.find({ device_id: deviceId });
+    // Exclude config documents
+    const docs = await db.find({ device_id: deviceId, type: { $ne: 'config' } });
     const totalRecords = docs.length;
 
     if (totalRecords === 0) {
@@ -144,6 +146,37 @@ async function renameDevice(oldId, newId) {
   }
 }
 
+// Define o estado do LED para um device
+async function setDeviceLed(deviceId, state) {
+  if (!deviceId) throw new Error('Invalid deviceId');
+
+  try {
+    // Upsert the config document for this device
+    const numUpdated = await db.update(
+      { device_id: deviceId, type: 'config' },
+      { $set: { device_id: deviceId, type: 'config', led: state, updatedAt: Date.now() } },
+      { upsert: true }
+    );
+    return numUpdated;
+  } catch (err) {
+    logger.error('Error setting device LED: ' + err.message);
+    throw err;
+  }
+}
+
+// Obtém o estado do LED para um device
+async function getDeviceLed(deviceId) {
+  if (!deviceId) throw new Error('Invalid deviceId');
+
+  try {
+    const doc = await db.findOne({ device_id: deviceId, type: 'config' });
+    return doc ? !!doc.led : false; // Default to false if not set
+  } catch (err) {
+    logger.error('Error getting device LED: ' + err.message);
+    throw err;
+  }
+}
+
 module.exports = {
   listDevices,
   getDeviceData,
@@ -151,5 +184,7 @@ module.exports = {
   getDeviceStats,
   deleteDevice,
   clearDeviceData,
-  renameDevice
+  renameDevice,
+  setDeviceLed,
+  getDeviceLed
 };

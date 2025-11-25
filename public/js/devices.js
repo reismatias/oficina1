@@ -157,20 +157,27 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function fetchDeviceStats(deviceId) {
-    deviceDetails.innerHTML = '<div style=\"opacity:0.7;text-align:center;padding:40px\">Carregando...</div>';
+    deviceDetails.innerHTML = '<div style="opacity:0.7;text-align:center;padding:40px">Carregando...</div>';
 
     try {
-      const res = await fetch(`/api/devices/${deviceId}/stats`);
-      if (!res.ok) throw new Error('Erro ao buscar estatísticas');
-      const stats = await res.json();
-      renderDeviceDetails(deviceId, stats);
+      const [resStats, resLed] = await Promise.all([
+        fetch(`/api/devices/${deviceId}/stats`),
+        fetch(`/api/devices/${deviceId}/led`)
+      ]);
+
+      if (!resStats.ok) throw new Error('Erro ao buscar estatísticas');
+
+      const stats = await resStats.json();
+      const ledData = resLed.ok ? await resLed.json() : { led: false };
+
+      renderDeviceDetails(deviceId, stats, ledData.led);
     } catch (err) {
       console.error(err);
-      deviceDetails.innerHTML = '<div style=\"color:#f88;text-align:center;padding:40px\">Erro ao carregar estatísticas</div>';
+      deviceDetails.innerHTML = '<div style="color:#f88;text-align:center;padding:40px">Erro ao carregar estatísticas</div>';
     }
   }
 
-  function renderDeviceDetails(deviceId, stats) {
+  function renderDeviceDetails(deviceId, stats, isLedOn) {
     const firstDate = stats.firstActivity ? new Date(stats.firstActivity).toLocaleString() : 'N/A';
     const lastDate = stats.lastActivity ? new Date(stats.lastActivity).toLocaleString() : 'N/A';
 
@@ -211,6 +218,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const actionsContainer = document.createElement('div');
     actionsContainer.style.cssText = 'display:flex;flex-direction:column;gap:10px';
 
+    const ledBtn = document.createElement('button');
+    ledBtn.className = isLedOn ? 'btn btn-danger' : 'btn btn-success';
+    ledBtn.style.cssText = 'width:100%;justify-content:center;display:flex;align-items:center';
+    ledBtn.textContent = isLedOn ? '💡 Desligar LED' : '💡 Ligar LED';
+    ledBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleLed(deviceId, !isLedOn);
+    });
+    actionsContainer.appendChild(ledBtn);
+
     const renameBtn = document.createElement('button');
     renameBtn.className = 'btn';
     renameBtn.style.cssText = 'width:100%;justify-content:center;display:flex;align-items:center';
@@ -245,6 +262,26 @@ document.addEventListener('DOMContentLoaded', () => {
     actionsContainer.appendChild(deleteBtn);
 
     deviceDetails.appendChild(actionsContainer);
+  }
+
+  async function handleLed(deviceId, newState) {
+    try {
+      const res = await fetch(`/api/devices/${deviceId}/led`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state: newState })
+      });
+
+      if (!res.ok) throw new Error('Erro ao alterar LED');
+
+      const data = await res.json();
+      // Refresh details to update button state
+      fetchDeviceStats(deviceId);
+
+    } catch (err) {
+      console.error(err);
+      await showConfirmDialog('Erro', 'Erro ao alterar LED: ' + err.message, 'OK', true);
+    }
   }
 
   async function handleRename(deviceId) {

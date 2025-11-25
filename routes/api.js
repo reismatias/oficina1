@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { listDevices, getDeviceData, saveDeviceData, getDeviceStats, deleteDevice, clearDeviceData, renameDevice } = require('../services/deviceService');
+const { listDevices, getDeviceData, saveDeviceData, getDeviceStats, deleteDevice, clearDeviceData, renameDevice, setDeviceLed, getDeviceLed } = require('../services/deviceService');
 const { logger } = require('../utils/logger');
 
 // ========================================
@@ -47,7 +47,11 @@ router.post('/dados', async (req, res) => {
 
   try {
     const filename = await saveDeviceData(deviceId, req.body);
-    return res.status(200).json({ message: `Dados recebidos e salvos no banco de dados (device: ${filename})` });
+    const ledState = await getDeviceLed(deviceId);
+    return res.status(200).json({
+      message: `Dados recebidos e salvos no banco de dados (device: ${filename})`,
+      acender_giroflex: ledState
+    });
   } catch (err) {
     logger.error('Erro ao salvar os dados: ' + (err && err.message));
     return res.status(500).json({ message: 'Erro ao salvar os dados' });
@@ -118,6 +122,37 @@ router.put('/api/devices/:id', async (req, res) => {
   } catch (err) {
     logger.error('Error renaming device: ' + (err && err.message));
     return res.status(500).json({ message: err.message || 'Erro ao renomear device' });
+  }
+});
+
+// Get LED state
+router.get('/api/devices/:id/led', async (req, res) => {
+  if (!req.session || !req.session.username) return res.status(401).json({ message: 'Unauthorized' });
+
+  const deviceId = req.params.id;
+
+  try {
+    const state = await getDeviceLed(deviceId);
+    return res.json({ led: state });
+  } catch (err) {
+    logger.error('Error getting LED state: ' + (err && err.message));
+    return res.status(500).json({ message: 'Erro ao obter estado do LED' });
+  }
+});
+
+// Set LED state
+router.post('/api/devices/:id/led', async (req, res) => {
+  if (!req.session || !req.session.username) return res.status(401).json({ message: 'Unauthorized' });
+
+  const deviceId = req.params.id;
+  const { state } = req.body; // Expecting boolean
+
+  try {
+    await setDeviceLed(deviceId, !!state);
+    return res.json({ message: `LED ${state ? 'ligado' : 'desligado'} com sucesso`, led: !!state });
+  } catch (err) {
+    logger.error('Error setting LED state: ' + (err && err.message));
+    return res.status(500).json({ message: 'Erro ao alterar estado do LED' });
   }
 });
 

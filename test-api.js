@@ -23,7 +23,7 @@ function getRandomDb() {
 // Envia dados simulados para a API
 async function sendData() {
   count++;
-  const db = getRandomDb() - 20;
+  const db = getRandomDb();
   const timestamp = Date.now();
 
   const payload = {
