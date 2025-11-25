@@ -6,8 +6,8 @@
 #include <ArduinoJson.h>
 
 // --- CONFIGURAÇÃO DE REDE WiFi ---
-const char* ssid = "projandi";
-const char* password = "ANDERSON2005";
+const char* ssid = "Matias’ iPhone 15";       // Substitua pelo nome da sua rede WiFi
+const char* password = "matias12345";  // Substitua pela senha da sua rede WiFi
 
 // --- Pinos e Configurações ---
 const int pinoSensor = 0;            // pino analógico para sensor de som (KY-037)
@@ -47,6 +47,21 @@ float converterRmsParaDB(float rms) {
   return dbValores[n - 1];
 }
 
+// --- Função para formatar horário ---
+String formatarHorario(time_t timestamp) {
+  struct tm* timeinfo = localtime(&timestamp);
+  if (!timeinfo) return "Hora invalida";
+  char buffer[20];
+  strftime(buffer, sizeof(buffer), "%d/%m/%Y %H:%M:%S", timeinfo);
+  return String(buffer);
+}
+
+// --- Verifica se horário está válido ---
+bool horarioValido() {
+  time_t now = time(nullptr);
+  return now > 8 * 3600 * 2; // Maior que 1970 + offset
+}
+
 // --- Conecta no Wi-Fi ---
 void conectarWiFi() {
   Serial.println();
@@ -75,6 +90,16 @@ void enviarDadosDbIntervalado(String endpoint, float db, time_t& ultimoTempo) {
   time_t now = time(nullptr);
 
   if ((now - ultimoTempo) >= 5) {  // envia a cada 5 segundos
+
+    // Se horário não estiver válido, tenta reconectar NTP (apenas se necessário)
+    if (!horarioValido()) {
+       Serial.println("⚠️ Horário inválido, aguardando NTP...");
+       return; // Pula este envio para não mandar dados com data errada
+    }
+
+    Serial.print("📅 Enviando dados - Horário: ");
+    Serial.println(formatarHorario(now));
+
     HTTPClient http;
     http.begin(endpoint);
     http.addHeader("Content-Type", "application/json");
@@ -83,7 +108,7 @@ void enviarDadosDbIntervalado(String endpoint, float db, time_t& ultimoTempo) {
     StaticJsonDocument<200> docEnvio;
     docEnvio["device_id"] = "esp32_c3_mini";
     docEnvio["db"] = db;
-    docEnvio["timestamp"] = (unsigned long) now;
+    docEnvio["timestamp"] = (uint64_t)now * 1000;  // Cast para 64 bits para evitar overflow
 
     String payload;
     serializeJson(docEnvio, payload);
@@ -140,6 +165,9 @@ void setup() {
     Serial.print(".");
   }
 
+  Serial.print("TIME = ");
+  Serial.print(now);
+
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("DECIBELIMETRO");
@@ -171,6 +199,15 @@ void loop() {
   }
 
   float decibeis = converterRmsParaDB((float)valorRMS);
+
+  // *Impressão no Serial dos valores com horário*
+  time_t agora = time(nullptr);
+  Serial.print("[");
+  Serial.print(formatarHorario(agora));
+  Serial.print("] RMS = ");
+  Serial.print(valorRMS, 4);
+  Serial.print(", dB = ");
+  Serial.println(decibeis, 2);
 
   // Exibe no LCD
   lcd.setCursor(0, 0);
