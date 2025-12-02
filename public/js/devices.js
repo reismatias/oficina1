@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ledBtn = document.createElement('button');
     ledBtn.className = isLedOn ? 'btn btn-danger' : 'btn btn-success';
     ledBtn.style.cssText = 'width:100%;justify-content:center;display:flex;align-items:center';
-    ledBtn.textContent = isLedOn ? '💡 Desligar LED' : '💡 Ligar LED';
+    ledBtn.textContent = isLedOn ? '🔌 Desligar Relé' : '🔌 Ligar Relé';
     ledBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       handleLed(deviceId, !isLedOn);
