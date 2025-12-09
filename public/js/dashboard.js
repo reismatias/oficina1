@@ -11,14 +11,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentInterval = 'realtime';
   let currentThreshold = 60;
+  let lastFetchedData = null; // Store last data to avoid re-fetching on threshold change
 
   let selectedDevice = null;
 
   // ========================================
   // Chart Resize Observer
-  // Garante que o gráfico se redimensione corretamente
-  // quando a sidebar é alternada.
+  // REMOVED: Chart.js handles resizing automatically.
+  // Manual resizing can cause conflicts and layout issues.
   // ========================================
+  /*
   const chartArea = document.getElementById('chartArea');
   if (chartArea) {
     const resizeObserver = new ResizeObserver(() => {
@@ -29,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     resizeObserver.observe(chartArea);
   }
+  */
 
   async function fetchDevices() {
     console.log('🔄 [DEBUG] Buscando devices...');
@@ -63,7 +66,27 @@ document.addEventListener('DOMContentLoaded', () => {
     dbThresholdEl.addEventListener('change', (e) => {
       currentThreshold = parseInt(e.target.value) || 60;
       console.log('📏 [DEBUG] Limite alterado para:', currentThreshold);
-      if (selectedDevice) {
+
+      // Update chart annotation and scale
+      if (myChart) {
+        if (myChart.options.plugins.annotation) {
+          myChart.options.plugins.annotation.annotations.thresholdLine.yMin = currentThreshold;
+          myChart.options.plugins.annotation.annotations.thresholdLine.yMax = currentThreshold;
+          myChart.options.plugins.annotation.annotations.thresholdLine.label.content = `Limite: ${currentThreshold}dB`;
+        }
+
+        // Ensure the scale includes the threshold
+        if (myChart.options.scales.y) {
+          myChart.options.scales.y.suggestedMax = currentThreshold + 10;
+        }
+
+        myChart.update('none');
+      }
+
+      // Re-render logs using cached data instead of fetching again
+      if (lastFetchedData) {
+        renderLogs(lastFetchedData.entries);
+      } else if (selectedDevice) {
         fetchDeviceData(selectedDevice);
       }
     });
@@ -120,16 +143,32 @@ document.addEventListener('DOMContentLoaded', () => {
   // ========================================
   async function fetchDeviceData(filename) {
     console.log('Fetching data for:', filename);
+    const deviceId = filename.replace('.json', '');
 
     try {
-      const res = await fetch(`/api/dados/${filename}`);
-      if (!res.ok) throw new Error('Erro ao buscar dados do device');
-      const data = await res.json();
+      const [resData, resThreshold] = await Promise.all([
+        fetch(`/api/dados/${filename}`),
+        fetch(`/api/devices/${deviceId}/threshold`)
+      ]);
+
+      if (!resData.ok) throw new Error('Erro ao buscar dados do device');
+
+      const data = await resData.json();
+      const thresholdData = resThreshold.ok ? await resThreshold.json() : { threshold: null };
+
+      // Update local threshold if it was fetched successfully
+      if (thresholdData.threshold !== null && thresholdData.threshold !== undefined) {
+        currentThreshold = thresholdData.threshold;
+        if (dbThresholdEl) dbThresholdEl.value = currentThreshold;
+      }
+
       console.log('Data received:', data);
+      lastFetchedData = data; // Cache data
       renderData(data);
     } catch (err) {
       console.error(err);
-      alert('Erro ao carregar dados: ' + err.message);
+      // Don't alert on every fetch error to avoid spamming if auto-refresh is on
+      console.log('Erro ao carregar dados: ' + err.message);
     }
   }
 
@@ -184,6 +223,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (myChart) {
       myChart.data.labels = labels;
       myChart.data.datasets[0].data = values;
+
+      // Ensure annotation is updated
+      if (myChart.options.plugins.annotation) {
+        myChart.options.plugins.annotation.annotations.thresholdLine.yMin = currentThreshold;
+        myChart.options.plugins.annotation.annotations.thresholdLine.yMax = currentThreshold;
+        myChart.options.plugins.annotation.annotations.thresholdLine.label.content = `Limite: ${currentThreshold}dB`;
+      }
+
       myChart.update('none');
     } else {
       myChart = new Chart(ctx, {
@@ -207,6 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
           scales: {
             y: {
               beginAtZero: true,
+              suggestedMax: currentThreshold + 10, // Ensure threshold is visible
               grid: { color: 'rgba(255, 255, 255, 0.1)' },
               ticks: { color: '#aaa' }
             },

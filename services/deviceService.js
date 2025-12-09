@@ -56,6 +56,14 @@ async function saveDeviceData(deviceId, data) {
       db_level: dbLevel,
       timestamp: timestamp
     });
+
+    // Check threshold and trigger LED if needed
+    const threshold = await getDeviceThreshold(deviceId);
+    if (threshold !== null && dbLevel > threshold) {
+      await setDeviceLed(deviceId, true);
+      logger.info(`Auto-triggered LED for device ${deviceId} (Level ${dbLevel} > Threshold ${threshold})`);
+    }
+
     return deviceId;
   } catch (err) {
     logger.error('Error saving data to DB: ' + err.message);
@@ -177,6 +185,36 @@ async function getDeviceLed(deviceId) {
   }
 }
 
+// Define o threshold de dB para um device
+async function setDeviceThreshold(deviceId, threshold) {
+  if (!deviceId) throw new Error('Invalid deviceId');
+
+  try {
+    const numUpdated = await db.update(
+      { device_id: deviceId, type: 'config' },
+      { $set: { device_id: deviceId, type: 'config', threshold: Number(threshold), updatedAt: Date.now() } },
+      { upsert: true }
+    );
+    return numUpdated;
+  } catch (err) {
+    logger.error('Error setting device threshold: ' + err.message);
+    throw err;
+  }
+}
+
+// Obtém o threshold de dB para um device
+async function getDeviceThreshold(deviceId) {
+  if (!deviceId) throw new Error('Invalid deviceId');
+
+  try {
+    const doc = await db.findOne({ device_id: deviceId, type: 'config' });
+    return doc && doc.threshold !== undefined ? doc.threshold : null;
+  } catch (err) {
+    logger.error('Error getting device threshold: ' + err.message);
+    throw err;
+  }
+}
+
 module.exports = {
   listDevices,
   getDeviceData,
@@ -186,5 +224,7 @@ module.exports = {
   clearDeviceData,
   renameDevice,
   setDeviceLed,
-  getDeviceLed
+  getDeviceLed,
+  setDeviceThreshold,
+  getDeviceThreshold
 };

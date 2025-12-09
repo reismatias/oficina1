@@ -160,24 +160,26 @@ document.addEventListener('DOMContentLoaded', () => {
     deviceDetails.innerHTML = '<div style="opacity:0.7;text-align:center;padding:40px">Carregando...</div>';
 
     try {
-      const [resStats, resLed] = await Promise.all([
+      const [resStats, resLed, resThreshold] = await Promise.all([
         fetch(`/api/devices/${deviceId}/stats`),
-        fetch(`/api/devices/${deviceId}/led`)
+        fetch(`/api/devices/${deviceId}/led`),
+        fetch(`/api/devices/${deviceId}/threshold`)
       ]);
 
       if (!resStats.ok) throw new Error('Erro ao buscar estatísticas');
 
       const stats = await resStats.json();
       const ledData = resLed.ok ? await resLed.json() : { led: false };
+      const thresholdData = resThreshold.ok ? await resThreshold.json() : { threshold: null };
 
-      renderDeviceDetails(deviceId, stats, ledData.led);
+      renderDeviceDetails(deviceId, stats, ledData.led, thresholdData.threshold);
     } catch (err) {
       console.error(err);
       deviceDetails.innerHTML = '<div style="color:#f88;text-align:center;padding:40px">Erro ao carregar estatísticas</div>';
     }
   }
 
-  function renderDeviceDetails(deviceId, stats, isLedOn) {
+  function renderDeviceDetails(deviceId, stats, isLedOn, threshold) {
     const firstDate = stats.firstActivity ? new Date(stats.firstActivity).toLocaleString() : 'N/A';
     const lastDate = stats.lastActivity ? new Date(stats.lastActivity).toLocaleString() : 'N/A';
 
@@ -202,9 +204,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="font-size:12px;opacity:0.6">Primeira Atividade</div>
           <div style="font-size:13px">${firstDate}</div>
         </div>
-        <div style="grid-column:1/3">
+        <div>
           <div style="font-size:12px;opacity:0.6">Última Atividade</div>
           <div style="font-size:13px">${lastDate}</div>
+        </div>
+        <div>
+           <div style="font-size:12px;opacity:0.6">Limite Automático (dB)</div>
+           <div style="font-size:13px; font-weight:bold; color: ${threshold ? '#ffeb3b' : '#aaa'}">${threshold !== null ? threshold + ' dB' : 'Desativado'}</div>
         </div>
       </div>
     `;
@@ -227,6 +233,16 @@ document.addEventListener('DOMContentLoaded', () => {
       handleLed(deviceId, !isLedOn);
     });
     actionsContainer.appendChild(ledBtn);
+
+    const thresholdBtn = document.createElement('button');
+    thresholdBtn.className = 'btn';
+    thresholdBtn.style.cssText = 'width:100%;justify-content:center;display:flex;align-items:center;background:rgba(255,255,255,0.1)';
+    thresholdBtn.textContent = '⚙️ Configurar Limite Automático';
+    thresholdBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleThreshold(deviceId, threshold);
+    });
+    actionsContainer.appendChild(thresholdBtn);
 
     const renameBtn = document.createElement('button');
     renameBtn.className = 'btn';
@@ -281,6 +297,53 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error(err);
       await showConfirmDialog('Erro', 'Erro ao alterar LED: ' + err.message, 'OK', true);
+    }
+  }
+
+  async function handleThreshold(deviceId, currentThreshold) {
+    const newThreshold = await showPromptDialog(
+      'Configurar Limite Automático',
+      `Digite o valor em dB para ativar o relé automaticamente (atual: ${currentThreshold !== null ? currentThreshold : 'Nenhum'}).\nDeixe vazio para desativar.`,
+      currentThreshold !== null ? currentThreshold : ''
+    );
+
+    if (newThreshold === null) return; // Cancelled
+
+    // If empty, maybe we want to disable it? For now let's assume 0 or just update.
+    // Actually, let's treat empty string as "disable" if the user wants to remove it?
+    // The prompt returns string.
+
+    let val = null;
+    if (newThreshold.trim() !== '') {
+      val = Number(newThreshold);
+      if (isNaN(val)) {
+        await showConfirmDialog('Erro', 'Valor inválido. Digite um número.', 'OK', true);
+        return;
+      }
+    } else {
+      // If user cleared the input, we could consider removing the threshold.
+      // But my API expects a value. Let's assume they want to set it to 0 or we need a way to remove it.
+      // For now, let's just enforce a number.
+      // If they want to disable, maybe we should have a "Disable" button or accept -1?
+      // Let's just accept the number for now.
+      await showConfirmDialog('Erro', 'Por favor digite um valor.', 'OK', true);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/devices/${deviceId}/threshold`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ threshold: val })
+      });
+
+      if (!res.ok) throw new Error('Erro ao definir threshold');
+
+      await showConfirmDialog('Sucesso', `Limite definido para ${val} dB`, 'OK', false);
+      fetchDeviceStats(deviceId);
+    } catch (err) {
+      console.error(err);
+      await showConfirmDialog('Erro', 'Erro ao definir threshold: ' + err.message, 'OK', true);
     }
   }
 

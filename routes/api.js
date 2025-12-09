@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { listDevices, getDeviceData, saveDeviceData, getDeviceStats, deleteDevice, clearDeviceData, renameDevice, setDeviceLed, getDeviceLed } = require('../services/deviceService');
+const { listDevices, getDeviceData, saveDeviceData, getDeviceStats, deleteDevice, clearDeviceData, renameDevice, setDeviceLed, getDeviceLed, setDeviceThreshold, getDeviceThreshold } = require('../services/deviceService');
 const { logger } = require('../utils/logger');
 
 // ========================================
@@ -153,6 +153,41 @@ router.post('/api/devices/:id/led', async (req, res) => {
   } catch (err) {
     logger.error('Error setting LED state: ' + (err && err.message));
     return res.status(500).json({ message: 'Erro ao alterar estado do LED' });
+  }
+});
+
+// Get Device Threshold
+router.get('/api/devices/:id/threshold', async (req, res) => {
+  if (!req.session || !req.session.username) return res.status(401).json({ message: 'Unauthorized' });
+
+  const deviceId = req.params.id;
+
+  try {
+    const threshold = await getDeviceThreshold(deviceId);
+    return res.json({ threshold });
+  } catch (err) {
+    logger.error('Error getting device threshold: ' + (err && err.message));
+    return res.status(500).json({ message: 'Erro ao obter threshold' });
+  }
+});
+
+// Set Device Threshold
+router.post('/api/devices/:id/threshold', async (req, res) => {
+  if (!req.session || !req.session.username) return res.status(401).json({ message: 'Unauthorized' });
+
+  const deviceId = req.params.id;
+  const { threshold } = req.body;
+
+  if (threshold === undefined || threshold === null) {
+    return res.status(400).json({ message: 'Threshold é obrigatório' });
+  }
+
+  try {
+    await setDeviceThreshold(deviceId, threshold);
+    return res.json({ message: `Threshold definido para ${threshold} dB`, threshold });
+  } catch (err) {
+    logger.error('Error setting device threshold: ' + (err && err.message));
+    return res.status(500).json({ message: 'Erro ao definir threshold' });
   }
 });
 
